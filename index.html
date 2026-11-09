@@ -462,9 +462,12 @@ function renderHeader(){
   var f=$('footNote');var txt=S.menu&&S.menu.footer;f.hidden=!txt;f.textContent=txt||'';
   var r=$('rulesTxt'),rt=S.menu?S.menu.rules:DEFAULT_RULES;r.hidden=!rt;r.textContent=rt||'';
 }
+/* names that already have a saved order this week (shown with a check mark in the name list) */
+function orderedNames(){var h={};S.orders.forEach(function(o){h[normName(o.data.name)]=1});return h}
 function renderNameCtl(){
   var d=S.draft,sel=$('nameSel');
-  sel.innerHTML='<option value="__type">הקלדת שם…</option>'+S.staff.map(function(n){return '<option value="'+esc(n)+'">'+esc(n)+'</option>'}).join('');
+  var have=orderedNames();
+  sel.innerHTML='<option value="__type">הקלדת שם…</option>'+S.staff.map(function(n){return '<option value="'+esc(n)+'">'+(have[n]?'\u2713 ':'')+esc(n)+'</option>'}).join('');
   var typing=d.typing||!S.staff.length||(d.name&&S.staff.indexOf(d.name)<0);
   if(typing)sel.value='__type';else if(d.name)sel.value=d.name;else sel.selectedIndex=-1;
   $('nameTxtBox').hidden=!typing;
@@ -828,7 +831,9 @@ function watchWeek(){
     renderBoard();syncDraft(false);onData();
   },function(){showErr('אי אפשר לקרוא את התפריט כרגע.')});
   S.unO=S.db.collection('orders').where('weekId','==',id).onSnapshot(function(snap){
+    var before=Object.keys(orderedNames()).sort().join('|');
     S.orders=snap.docs.map(function(d){return {id:d.id,data:d.data()}});
+    if(Object.keys(orderedNames()).sort().join('|')!==before)renderNameCtl();
     syncDraft(false);onData();
   },function(){showErr('אי אפשר לקרוא את ההזמנות כרגע.')});
 }
